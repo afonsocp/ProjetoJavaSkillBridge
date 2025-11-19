@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: skillbridge-api
+    env: java
+    buildCommand: mvn clean install -DskipTests
+    startCommand: java -jar target/skillbridge-api-0.0.1-SNAPSHOT.jar
+    envVars:
+      - key: DB_USERNAME
+        value: RM557863
+      - key: DB_PASSWORD
+        sync: false  # Configure manualmente no dashboard
+      - key: SPRING_DATASOURCE_URL
+        value: jdbc:oracle:thin:@//oracle.fiap.com.br:1521/ORCL
+      - key: SECURITY_JWT_SECRET
+        sync: false  # Configure manualmente no dashboard
+      - key: SPRING_AI_GEMINI_API_KEY
+        sync: false  # Configure manualmente no dashboard
+      - key: SPRING_AI_GEMINI_MODEL
+        value: gemini-2.0-flash-exp
+      - key: IOT_SERVICE_URL
+        sync: false  # Configure depois com a URL do serviço IoT
+      - key: PORT
+        fromService:
+          type: web
+          name: skillbridge-api
+          property: port
+
