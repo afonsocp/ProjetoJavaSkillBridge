@@ -182,6 +182,18 @@ A API integra com o módulo Python para gerar planos de estudos:
 
 **Configuração:** `iot.service.url=http://localhost:8000` (servidor Python deve estar rodando)
 
+## 🌐 Deploy em Produção
+
+A aplicação está disponível em produção através do Render:
+
+- **API Java (Spring Boot):** https://projetoiotskillbridge.onrender.com/
+- **Servidor IoT (Python):** https://projetoiotskillbridge.onrender.com
+
+### Documentação da API em Produção
+
+- **Swagger UI:** https://projetoiotskillbridge.onrender.com/swagger-ui.html
+- **Health Check:** https://projetoiotskillbridge.onrender.com/actuator/health
+
 ## 📦 Build e Deploy
 
 ### Gerar JAR
