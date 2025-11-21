@@ -85,28 +85,60 @@ public class UsuarioService {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
 
-        if (!usuario.getEmail().equals(request.getEmail()) && usuarioRepository.existsByEmail(request.getEmail())) {
-            throw new BusinessException("E-mail já cadastrado.");
+        // Validação de email apenas se estiver sendo alterado
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            if (!usuario.getEmail().equals(request.getEmail()) && usuarioRepository.existsByEmail(request.getEmail())) {
+                throw new BusinessException("E-mail já cadastrado.");
+            }
+            usuario.setEmail(request.getEmail());
         }
 
-        usuario.setNome(request.getNome());
-        usuario.setEmail(request.getEmail());
+        // Atualiza apenas os campos que foram enviados (não null)
+        if (request.getNome() != null && !request.getNome().isBlank()) {
+            usuario.setNome(request.getNome());
+        }
 
         if (request.getSenha() != null && !request.getSenha().isBlank()) {
             usuario.setSenha(passwordEncoder.encode(request.getSenha()));
         }
 
-        usuario.setCompetencias(normalizeCompetencias(request.getCompetencias()));
-        usuario.setTelefone(request.getTelefone());
-        usuario.setCidade(request.getCidade());
-        usuario.setUf(formatUf(request.getUf()));
-        if (request.getObjetivoCarreira() != null) {
-            usuario.setObjetivoCarreira(request.getObjetivoCarreira());
+        if (request.getCompetencias() != null) {
+            usuario.setCompetencias(normalizeCompetencias(request.getCompetencias()));
         }
+
+        if (request.getTelefone() != null) {
+            usuario.setTelefone(request.getTelefone().isBlank() ? null : request.getTelefone());
+        }
+
+        if (request.getCidade() != null) {
+            usuario.setCidade(request.getCidade().isBlank() ? null : request.getCidade());
+        }
+
+        if (request.getUf() != null) {
+            usuario.setUf(formatUf(request.getUf()));
+        }
+
+        if (request.getObjetivoCarreira() != null) {
+            usuario.setObjetivoCarreira(request.getObjetivoCarreira().isBlank() ? null : request.getObjetivoCarreira());
+        }
+
         if (request.getStatusProfissional() != null) {
             usuario.setStatusProfissional(request.getStatusProfissional());
         }
 
+        // Role só pode ser atualizado por ADMIN (validação feita no controller)
+        if (request.getRole() != null) {
+            usuario.setRole(request.getRole());
+        }
+
+        return mapToResponse(usuarioRepository.save(usuario));
+    }
+
+    @Transactional
+    public UsuarioResponse alterarRole(UUID id, Role role) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
+        usuario.setRole(role);
         return mapToResponse(usuarioRepository.save(usuario));
     }
 

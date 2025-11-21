@@ -2,12 +2,17 @@ package br.com.skillbridge.api.service;
 
 import br.com.skillbridge.api.dto.PlanoEstudosRequest;
 import br.com.skillbridge.api.dto.PlanoEstudosResponse;
+import br.com.skillbridge.api.exception.BusinessException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
@@ -63,12 +68,24 @@ public class PlanoEstudosService {
                 JsonNode jsonNode = objectMapper.readTree(response.getBody());
                 return mapearResposta(jsonNode, request);
             } else {
-                throw new RuntimeException("Erro ao chamar serviço IOT: " + response.getStatusCode());
+                log.error("Serviço IOT retornou status não sucesso: {}", response.getStatusCode());
+                throw new BusinessException("Erro ao chamar serviço de geração de plano de estudos. Status: " + response.getStatusCode());
             }
             
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            log.error("Erro HTTP ao chamar serviço IOT: {} - {}", e.getStatusCode(), e.getResponseBodyAsString(), e);
+            throw new BusinessException("Erro ao comunicar com serviço de geração de plano de estudos: " + e.getStatusCode());
+        } catch (ResourceAccessException e) {
+            log.error("Erro de conexão com serviço IOT: {}", e.getMessage(), e);
+            throw new BusinessException("Serviço de geração de plano de estudos indisponível. Tente novamente mais tarde.");
+        } catch (JsonProcessingException e) {
+            log.error("Erro ao processar resposta JSON do serviço IOT", e);
+            throw new BusinessException("Erro ao processar resposta do serviço de geração de plano de estudos.");
+        } catch (BusinessException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("Erro ao gerar plano de estudos", e);
-            throw new RuntimeException("Erro ao gerar plano de estudos: " + e.getMessage(), e);
+            log.error("Erro inesperado ao gerar plano de estudos", e);
+            throw new BusinessException("Erro inesperado ao gerar plano de estudos: " + e.getMessage());
         }
     }
 

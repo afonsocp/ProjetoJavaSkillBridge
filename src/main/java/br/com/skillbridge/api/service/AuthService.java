@@ -4,6 +4,7 @@ import br.com.skillbridge.api.dto.AuthResponse;
 import br.com.skillbridge.api.dto.LoginRequest;
 import br.com.skillbridge.api.dto.UsuarioRequest;
 import br.com.skillbridge.api.dto.UsuarioResponse;
+import br.com.skillbridge.api.exception.BusinessException;
 import br.com.skillbridge.api.model.Role;
 import br.com.skillbridge.api.model.Usuario;
 import br.com.skillbridge.api.repository.UsuarioRepository;
@@ -35,7 +36,8 @@ public class AuthService {
     @Transactional
     public AuthResponse register(UsuarioRequest request) {
         UsuarioResponse usuarioResponse = usuarioService.create(request, Role.USER);
-        Usuario usuario = usuarioRepository.findById(usuarioResponse.getId()).orElseThrow();
+        Usuario usuario = usuarioRepository.findById(usuarioResponse.getId())
+                .orElseThrow(() -> new BusinessException("Usuário não encontrado após criação."));
         String token = jwtService.generateToken(usuario);
         return AuthResponse.builder()
                 .token(token)

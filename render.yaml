@@ -18,7 +18,7 @@ services:
       - key: SPRING_AI_GEMINI_MODEL
         value: gemini-2.0-flash-exp
       - key: IOT_SERVICE_URL
-        sync: false  # Configure depois com a URL do serviço IoT
+        value: https://projetoiotskillbridge.onrender.com
       - key: PORT
         fromService:
           type: web

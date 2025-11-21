@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -55,6 +56,7 @@ public class AplicacaoController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Atualizar aplicação")
     public ResponseEntity<AplicacaoResponse> update(@PathVariable UUID id, @Valid @RequestBody AplicacaoRequest request) {
         return ResponseEntity.ok(aplicacaoService.update(id, request));
@@ -62,6 +64,7 @@ public class AplicacaoController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Excluir aplicação")
     public void delete(@PathVariable UUID id) {
         aplicacaoService.delete(id);
