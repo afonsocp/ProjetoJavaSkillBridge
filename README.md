@@ -343,6 +343,168 @@ Authorization: Bearer <token-jwt>
 
 O token JWT é obtido através dos endpoints de autenticação e deve ser incluído em todas as requisições subsequentes.
 
+## Gestão do Aplicativo
+
+A API SkillBridge implementa um sistema de gestão com dois níveis de acesso: **Usuário Comum** e **Administrador**. Cada nível possui permissões específicas para gerenciar diferentes aspectos da plataforma.
+
+### Gestão para Usuários Comuns
+
+Usuários com role `USER` podem gerenciar apenas suas próprias informações:
+
+#### Permissões de Usuário Comum
+
+- **Editar Própria Conta**: `PUT /usuarios/{id}` - Apenas se o ID for do próprio usuário
+- **Excluir Própria Conta**: `DELETE /usuarios/{id}` - Apenas se o ID for do próprio usuário
+- **Visualizar Dados**: `GET /usuarios` e `GET /usuarios/{id}` - Acesso a qualquer usuário
+- **Criar Candidaturas**: `POST /aplicacoes` - Candidatar-se a vagas
+- **Visualizar Candidaturas**: `GET /aplicacoes` - Ver próprias candidaturas
+- **Acessar Conteúdo**: `GET /vagas`, `GET /cursos` - Visualizar vagas e cursos disponíveis
+- **Gerar Recomendações**: `POST /api/v1/ia/recomendacoes/{usuarioId}` - Apenas para próprio ID
+- **Gerar Planos de Estudos**: `POST /api/v1/planos-estudos/gerar` - Criar planos personalizados
+
+#### Restrições
+
+- Não podem criar, editar ou excluir vagas
+- Não podem criar, editar ou excluir cursos
+- Não podem criar, editar ou excluir outros usuários
+- Não podem alterar o role de outros usuários
+- Não podem atualizar ou excluir candidaturas de outros usuários
+
+### Gestão para Administradores
+
+Usuários com role `ADMIN` possuem acesso total ao sistema:
+
+#### Permissões de Administrador
+
+- **Gerenciamento Completo de Usuários**:
+  - `POST /usuarios` - Criar novos usuários
+  - `PUT /usuarios/{id}` - Editar qualquer usuário
+  - `DELETE /usuarios/{id}` - Excluir qualquer usuário
+  - `PUT /usuarios/{id}/role` - Alterar role de usuários (promover/rebaixar)
+
+- **Gerenciamento Completo de Vagas**:
+  - `POST /vagas` - Criar novas vagas
+  - `PUT /vagas/{id}` - Editar qualquer vaga
+  - `DELETE /vagas/{id}` - Excluir qualquer vaga
+
+- **Gerenciamento Completo de Cursos**:
+  - `POST /cursos` - Criar novos cursos
+  - `PUT /cursos/{id}` - Editar qualquer curso
+  - `DELETE /cursos/{id}` - Excluir qualquer curso
+
+- **Gerenciamento de Aplicações**:
+  - `PUT /aplicacoes/{id}` - Atualizar status de candidaturas
+  - `DELETE /aplicacoes/{id}` - Excluir candidaturas
+
+- **Todas as Permissões de Usuário Comum**
+
+### Como Criar um Usuário Administrador
+
+#### Opção 1: Via Banco de Dados (Primeiro Admin)
+
+Execute no Oracle Database:
+
+```sql
+-- Ver usuários existentes
+SELECT id, nome, email, role FROM usuario;
+
+-- Promover usuário para ADMIN
+UPDATE usuario 
+SET role = 'ADMIN' 
+WHERE email = 'email-do-usuario@exemplo.com';
+
+-- Confirmar alteração
+SELECT id, nome, email, role FROM usuario WHERE role = 'ADMIN';
+```
+
+#### Opção 2: Via API (Requer Admin Existente)
+
+**Usando endpoint específico de role:**
+
+```http
+PUT /usuarios/{usuarioId}/role
+Authorization: Bearer <token-admin>
+Content-Type: application/json
+
+"ADMIN"
+```
+
+**Ou usando endpoint de atualização:**
+
+```http
+PUT /usuarios/{usuarioId}
+Authorization: Bearer <token-admin>
+Content-Type: application/json
+
+{
+  "nome": "Nome do Usuário",
+  "email": "email@exemplo.com",
+  "role": "ADMIN"
+}
+```
+
+### Sistema de Autorização
+
+A API utiliza Spring Security com controle de acesso baseado em roles:
+
+- **`@PreAuthorize("hasRole('ADMIN')")`**: Restringe endpoints apenas para administradores
+- **Validação Manual**: Permite que usuários editem/excluam suas próprias contas mesmo sem ser ADMIN
+- **JWT Token**: Contém informações do role do usuário, verificadas em cada requisição
+
+### Exemplos de Uso
+
+#### Exemplo 1: Usuário Editando Própria Conta
+
+```http
+PUT /usuarios/{meu-id}
+Authorization: Bearer <meu-token>
+Content-Type: application/json
+
+{
+  "telefone": "11999999999",
+  "cidade": "São Paulo"
+}
+```
+
+#### Exemplo 2: Admin Criando Vaga
+
+```http
+POST /vagas
+Authorization: Bearer <token-admin>
+Content-Type: application/json
+
+{
+  "titulo": "Desenvolvedor Java",
+  "empresa": "Tech Corp",
+  "localidade": "São Paulo/SP",
+  "requisitos": ["Java", "Spring Boot"],
+  "salario": 8000,
+  "tipoContrato": "CLT"
+}
+```
+
+#### Exemplo 3: Admin Promovendo Usuário
+
+```http
+PUT /usuarios/{usuario-id}/role
+Authorization: Bearer <token-admin>
+Content-Type: application/json
+
+"ADMIN"
+```
+
+### Documentação Swagger
+
+Acesse a documentação Swagger para testar os endpoints:
+
+- **Local**: `http://localhost:8080/swagger-ui.html`
+- **Produção**: `https://projetojavaskillbridge.onrender.com/swagger-ui.html`
+
+No Swagger, você pode:
+1. Fazer login e obter token JWT
+2. Clicar em "Authorize" e inserir o token
+3. Testar todos os endpoints disponíveis para seu role
+
 ## Integração com Oracle Database
 
 A API utiliza packages PL/SQL para operações complexas:

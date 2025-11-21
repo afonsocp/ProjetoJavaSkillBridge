@@ -44,7 +44,17 @@ public class VagaService {
     public VagaResponse create(VagaRequest request) {
         Vaga vaga = toEntity(new Vaga(), request);
         Vaga saved = vagaRepository.save(vaga);
-        rabbitTemplate.ifPresent(template -> template.convertAndSend(VAGA_EVENT_QUEUE, saved.getId()));
+        
+        // Tenta enviar evento para RabbitMQ, mas não falha se não estiver disponível
+        rabbitTemplate.ifPresent(template -> {
+            try {
+                template.convertAndSend(VAGA_EVENT_QUEUE, saved.getId());
+            } catch (Exception e) {
+                // RabbitMQ não está disponível, mas a vaga foi criada com sucesso
+                // Log do erro pode ser adicionado aqui se necessário
+            }
+        });
+        
         return mapToResponse(saved);
     }
 

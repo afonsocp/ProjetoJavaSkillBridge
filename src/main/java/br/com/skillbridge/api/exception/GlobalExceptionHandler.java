@@ -1,5 +1,6 @@
 package br.com.skillbridge.api.exception;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Locale;
 
 @RestControllerAdvice
+@Hidden
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private final MessageSource messageSource;
